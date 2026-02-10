@@ -5,6 +5,12 @@ on:
     branches:
       - main
 
+# Ensure the job has permissions to push the `gh-pages` branch
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

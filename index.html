@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>(Co)Studio MX | Creative Studio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #050508;
+            --text-light: #F5F5F0;
+            --accent-orange: #FF7340;
+            --accent-beige: #D9D2C5;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            cursor: none; /* Escondemos el cursor para usar el personalizado */
+        }
+
+        /* Ruido Cinematográfico Overlay */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: .04;
+            z-index: 9999;
+            pointer-events: none;
+            background-image: url("https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Noise_Texture.png");
+        }
+
+        .editorial-title {
+            font-size: clamp(3rem, 15vw, 18rem);
+            line-height: 0.8;
+            letter-spacing: -0.06em;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        /* Custom Cursor */
+        #custom-cursor {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            mix-blend-difference: difference;
+            transition: width 0.3s, height 0.3s, background 0.3s;
+            transform: translate(-50%, -50%);
+        }
+
+        #custom-cursor.active {
+            width: 80px;
+            height: 80px;
+            background: var(--accent-orange);
+            mix-blend-difference: normal;
+        }
+
+        #custom-cursor span {
+            display: none;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: black;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #custom-cursor.active span { display: block; }
+
+        /* Floating Gallery Section */
+        #projects {
+            position: relative;
+            height: 160vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-container {
+            position: absolute;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4rem;
+            width: 120%;
+            will-change: transform;
+        }
+
+        .project-card {
+            position: relative;
+            background: #111;
+            aspect-ratio: 1/1.2;
+            overflow: hidden;
+            transition: transform 0.6s cubic-bezier(0.2, 0, 0.2, 1);
+        }
+
+        .project-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(1);
+            transition: filter 0.5s ease, transform 0.5s ease;
+        }
+
+        .project-card:hover img {
+            filter: grayscale(0);
+            transform: scale(1.05);
+        }
+
+        .project-info {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 20;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+
+        .project-card:hover .project-info {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        #webgl-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100vh;
+            z-index: 0; pointer-events: none;
+        }
+
+        .content-overlay { position: relative; z-index: 10; }
+
+        /* Backgrounds específicos inspirados en las fotos */
+        .bg-gesto { background-color: var(--accent-beige); }
+        .bg-columna { background-color: var(--accent-orange); }
+        .bg-seahouse { background-color: #000; border: 1px solid #222; }
+
+    </style>
+</head>
+<body>
+
+    <div id="custom-cursor"><span>View</span></div>
+    <div id="webgl-container"></div>
+
+    <nav class="fixed top-0 left-0 w-full p-8 flex justify-between items-start mix-blend-difference z-50">
+        <div class="font-bold text-xl tracking-tighter uppercase">(Co)Studio MX</div>
+        <div class="flex gap-12 text-xs uppercase tracking-[0.2em] font-medium">
+            <a href="#projects" class="hover:opacity-50 transition-opacity">Work</a>
+            <a href="#studio" class="hover:opacity-50 transition-opacity">Philosophy</a>
+            <a href="#contact" class="hover:opacity-50 transition-opacity">Contact</a>
+        </div>
+    </nav>
+
+    <main class="content-overlay">
+        
+        <!-- HERO -->
+        <section id="hero" class="h-screen flex flex-col justify-center items-center px-6 text-center">
+            <div class="reveal">
+                <span class="text-[10px] uppercase tracking-[0.5em] text-gray-500 mb-6 block">Guadalajara — Mexico</span>
+                <h1 class="editorial-title" id="hero-title">(Co)Studio</h1>
+            </div>
+            <p class="mt-8 text-lg font-light tracking-tight reveal" style="transition-delay: 200ms;">
+                Independent Creative Practice for Contemporary Brands.
+            </p>
+        </section>
+
+        <!-- INTERACTIVE GALLERY SECTION -->
+        <section id="projects" class="py-20">
+            <div class="absolute top-20 left-12 reveal">
+                <h2 class="text-xs uppercase tracking-[0.3em] text-gray-500">Selected Projects / 24—26</h2>
+            </div>
+
+            <div class="gallery-container" id="gallery">
+                <!-- Project 1: Gēsto -->
+                <div class="project-card bg-gesto reveal group" data-speed="2">
+                    <div class="project-info">
+                        <h3 class="text-4xl font-black text-black tracking-tighter">GĒSTO®</h3>
+                        <p class="text-[10px] text-black/60 uppercase font-bold">Brand Identity / 2026</p>
+                    </div>
+                    <div class="w-full h-full flex items-center justify-center p-12">
+                        <div class="w-full border-[10px] border-black p-4 flex flex-col justify-between aspect-square transition-transform group-hover:rotate-3">
+                             <span class="text-black font-black text-6xl">G.</span>
+                             <span class="text-black text-[10px] uppercase font-bold self-end">Visual System</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 2: SeaHouse -->
+                <div class="project-card bg-seahouse reveal group" data-speed="-1" style="transition-delay: 100ms;">
+                    <div class="project-info">
+                        <h3 class="text-4xl font-black text-white tracking-tighter">SEAHOUSE</h3>
+                        <p class="text-[10px] text-white/40 uppercase font-bold">Editorial Design / 2025</p>
+                    </div>
+                    <div class="w-full h-full flex items-center justify-center p-12 overflow-hidden">
+                        <div class="relative w-full h-full bg-zinc-900 group-hover:scale-110 transition-transform duration-700">
+                            <!-- Simulación de mockup arquitectónico -->
+                             <div class="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1600585154340-be6191da1128?auto=format&fit=crop&q=80&w=800')] bg-cover bg-center"></div>
+                             <div class="absolute top-4 left-4 text-white font-bold text-xs">ARCH. VOLUME I</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 3: Columna -->
+                <div class="project-card bg-columna reveal group" data-speed="1.5" style="transition-delay: 200ms;">
+                    <div class="project-info">
+                        <h3 class="text-4xl font-black text-black tracking-tighter">COLUMNA</h3>
+                        <p class="text-[10px] text-black/60 uppercase font-bold">OOH Campaign / 2024</p>
+                    </div>
+                    <div class="w-full h-full flex items-center justify-center p-8">
+                        <div class="text-black font-black text-8xl leading-none group-hover:tracking-[0.1em] transition-all">HOLA.</div>
+                    </div>
+                </div>
+
+                <!-- Project 4: Phortal -->
+                <div class="project-card bg-zinc-800 reveal group" data-speed="-2" style="transition-delay: 150ms;">
+                    <div class="project-info">
+                        <h3 class="text-4xl font-black text-white tracking-tighter">PHORTAL</h3>
+                        <p class="text-[10px] text-white/40 uppercase font-bold">Photography / 2026</p>
+                    </div>
+                    <div class="w-full h-full bg-[url('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800')] bg-cover bg-center mix-blend-luminosity group-hover:mix-blend-normal transition-all"></div>
+                </div>
+
+                <!-- Project 5: Monte Cabo -->
+                <div class="project-card bg-white reveal group" data-speed="3" style="transition-delay: 250ms;">
+                    <div class="project-info">
+                        <h3 class="text-4xl font-black text-black tracking-tighter">MONTE CABO</h3>
+                        <p class="text-[10px] text-black/40 uppercase font-bold">Real Estate / 2025</p>
+                    </div>
+                    <div class="w-full h-full border-[1px] border-black/10 flex flex-col p-8 justify-between">
+                        <div class="text-black font-medium text-xs">Affordable Luxury Residences</div>
+                        <div class="h-1/2 w-full bg-gray-100"></div>
+                    </div>
+                </div>
+
+                <!-- Project 6: Lizza -->
+                <div class="project-card bg-[#FF3B30] reveal group" data-speed="1" style="transition-delay: 300ms;">
+                    <div class="project-info">
+                        <h3 class="text-4xl font-black text-white tracking-tighter">LIZZA App</h3>
+                        <p class="text-[10px] text-white/60 uppercase font-bold">UI/UX Design / 2026</p>
+                    </div>
+                    <div class="w-full h-full flex items-center justify-center">
+                        <div class="w-1/2 h-4/5 bg-black rounded-[2rem] border-4 border-white/20 shadow-2xl transform rotate-12 group-hover:rotate-0 transition-transform duration-500"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STUDIO INFO -->
+        <section id="studio" class="py-40 bg-white text-black px-6 md:px-24 relative z-20">
+            <div class="max-w-5xl mx-auto">
+                <span class="text-xs uppercase tracking-widest text-gray-400 mb-8 block">About the studio</span>
+                <h2 class="text-5xl md:text-7xl font-bold tracking-tighter leading-none mb-12">
+                    Creemos en la fricción productiva y la narrativa visual honesta.
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-xl leading-relaxed text-gray-600">
+                    <p>
+                        (Co)Studio MX no es solo un nombre, es una metodología. Colaboramos como una extensión creativa de las marcas, eliminando la jerarquía tradicional para encontrar la esencia de cada proyecto.
+                    </p>
+                    <p>
+                        Basados en Guadalajara y operando globalmente, mezclamos el rigor del diseño editorial clásico con la experimentación digital de vanguardia.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer id="contact" class="py-32 px-6 md:px-24 bg-black text-white">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end gap-16">
+                <div>
+                    <h2 class="text-5xl md:text-9xl font-black tracking-tighter leading-none mb-12">CONTACT.</h2>
+                    <div class="flex flex-col md:flex-row gap-12 text-xs uppercase tracking-widest text-gray-500">
+                        <a href="#" class="hover:text-white transition-colors">Instagram</a>
+                        <a href="#" class="hover:text-white transition-colors">Behance</a>
+                        <a href="mailto:hola@costudiomx.com" class="hover:text-white transition-colors">hola@costudiomx.com</a>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-gray-700 uppercase tracking-widest">© 2026 (Co)Studio MX — Beyond Visuals.</p>
+                </div>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        /**
+         * CURSOR LOGIC
+         */
+        const cursor = document.getElementById('custom-cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.querySelectorAll('a, button, .project-card').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('active'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+        });
+
+        /**
+         * FLOATING GALLERY PARALLAX LOGIC
+         */
+        const gallery = document.getElementById('gallery');
+        const cards = document.querySelectorAll('.project-card');
+        
+        let targetX = 0;
+        let targetY = 0;
+        let currentX = 0;
+        let currentY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            // Normalizamos coordenadas de -1 a 1
+            targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+            targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        function updateGallery() {
+            // Suavizado (lerp)
+            currentX += (targetX - currentX) * 0.05;
+            currentY += (targetY - currentY) * 0.05;
+
+            // Desplazamiento general del contenedor
+            gallery.style.transform = `translate(${currentX * -50}px, ${currentY * -30}px)`;
+
+            // Desplazamiento individual por cada card (Parallax Profundidad)
+            cards.forEach(card => {
+                const speed = parseFloat(card.getAttribute('data-speed'));
+                const x = currentX * (speed * 20);
+                const y = currentY * (speed * 15);
+                card.style.transform = `translate(${x}px, ${y}px)`;
+            });
+
+            requestAnimationFrame(updateGallery);
+        }
+
+        /**
+         * THREE.JS BACKGROUND
+         */
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('webgl-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.IcosahedronGeometry(15, 1);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.03 
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+        camera.position.z = 40;
+
+        function animateHero() {
+            requestAnimationFrame(animateHero);
+            mesh.rotation.y += 0.001;
+            mesh.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize everything
+        window.onload = () => {
+            animateHero();
+            updateGallery();
+            
+            // Intersection Observer
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('active');
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        };
+
+    </script>
+</body>
+</html>

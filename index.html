@@ -542,10 +542,8 @@
             requestAnimationFrame(updateGallery);
         }
 
-<!--
-        /**
-         * THREE.JS BACKGROUND
-         */
+        /* THREE.JS BACKGROUND
+         
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -565,8 +563,7 @@
             mesh.rotation.y += 0.001;
             mesh.rotation.x += 0.0005;
             renderer.render(scene, camera);
-        }
--->
+        } */
 
         function initReveals() {
             const observer = new IntersectionObserver((entries) => {
